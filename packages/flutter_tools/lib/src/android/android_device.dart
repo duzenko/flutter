@@ -858,6 +858,8 @@ class _AdbLogReader extends DeviceLogReader {
     final String lastTimestamp = device.lastLogcatTimestamp;
     // Start the adb logcat process and filter logs by the "flutter" tag.
     final List<String> args = <String>[
+      'shell',  // some devices (notably LG) will only output logcat via shell
+      '-x',     // https://github.com/flutter/flutter/issues/51853
       'logcat',
       '-v',
       'time',
@@ -868,7 +870,7 @@ class _AdbLogReader extends DeviceLogReader {
     if (apiVersion != null && apiVersion >= kLollipopVersionCode) {
       args.addAll(<String>[
         '-T',
-        lastTimestamp ?? '', // Empty `-T` means the timestamp of the logcat command invocation.
+        if (lastTimestamp != null) '\'$lastTimestamp\'' else '0', // '-T 0` means the timestamp of the logcat command invocation.
       ]);
     }
 
