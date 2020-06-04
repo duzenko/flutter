@@ -930,7 +930,11 @@ class AdbLogReader extends DeviceLogReader {
     }(await device.apiVersion);
 
     // Start the adb logcat process and filter the most recent logs since `lastTimestamp`.
+    // Some devices (notably LG) will only output logcat via shell
+    // https://github.com/flutter/flutter/issues/51853
     final List<String> args = <String>[
+      'shell',
+      '-x',
       'logcat',
       '-v',
       'time',
@@ -940,9 +944,9 @@ class AdbLogReader extends DeviceLogReader {
         'flutter',
       ] else if (apiVersion != null && apiVersion >= kLollipopVersionCode) ...<String>[
         // Otherwise, filter for logs appearing past the present.
-        // Empty `-T` means the timestamp of the logcat command invocation.
+        // '-T 0` means the timestamp of the logcat command invocation.
         '-T',
-        device.lastLogcatTimestamp ?? '',
+        if (device.lastLogcatTimestamp != null) '\'${device.lastLogcatTimestamp}\'' else '0',
       ],
     ];
     final Process process = await processManager.start(device.adbCommandForDevice(args));
